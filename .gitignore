@@ -1,4 +1,9 @@
 .env
+.venv/
+.models/
+*.log
+.cache/
+.ruff_cache/
 .DS_Store
 __pycache__/
 *.pyc

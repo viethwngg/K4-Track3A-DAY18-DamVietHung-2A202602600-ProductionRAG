@@ -1,0 +1,27 @@
+{
+  "basic": {
+    "count": 57,
+    "avg_len": 366,
+    "min_len": 94,
+    "max_len": 565
+  },
+  "semantic": {
+    "count": 208,
+    "avg_len": 99,
+    "min_len": 6,
+    "max_len": 354
+  },
+  "hierarchical": {
+    "count": 101,
+    "avg_len": 206,
+    "min_len": 7,
+    "max_len": 256,
+    "parents": 26
+  },
+  "structure": {
+    "count": 107,
+    "avg_len": 194,
+    "min_len": 86,
+    "max_len": 565
+  }
+}

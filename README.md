@@ -148,3 +148,47 @@ K4-Track3A-Production-RAG/
   *(Ví dụ: `K4-Track3A-DAY18-NguyenVanAn-AI20K001-ProductionRAG`)*
 - **Hạn chót nộp bài:** **23h59 ngày diễn ra bài lab (GMT+7)** trên cổng VLearn LMS / Codelab.
 - **Chi tiết yêu cầu:** Xem tại [ASSIGNMENT.md](ASSIGNMENT.md) và [RUBRIC.md](RUBRIC.md).
+
+## Bài làm — Đàm Việt Hưng (2A202602600)
+
+Đã implement M1–M5: semantic/hierarchical/Markdown chunking, Vietnamese BM25,
+dense Qdrant, RRF, CrossEncoder, RAGAS 4 metrics và combined enrichment.
+Production retrieve child rồi khôi phục parent, loại parent trùng trong top-3,
+và chọn phiên bản mới nhất trong các family tài liệu `_vN` của corpus lab.
+Ground truth chỉ được đưa vào evaluator.
+
+Chạy từ thư mục repository trên PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements-lock.txt
+Copy-Item .env.example .env          # Chỉ thực hiện khi chưa có .env
+# Điền OPENAI_API_KEY trong .env, rồi lưu file.
+docker compose up -d
+python scripts/download_models.py   # Tải model lần đầu; snapshot ghim theo commit
+.\.venv\Scripts\python.exe main.py
+.\.venv\Scripts\python.exe check_lab.py
+```
+
+`main.py` sinh hai reports, phân tích bottom-5 và bảng latency từ kết quả thực tế.
+`scripts/write_analysis.py` có thể chạy riêng để tạo lại phần phân tích từ reports.
+Reflection cho project RAG tìm dataset ADAS nằm tại
+[reflection_DamVietHung.md](analysis/reflections/reflection_DamVietHung.md).
+
+Các kết quả cần kiểm tra:
+
+- [Production RAGAS report](reports/ragas_report.json): aggregate, 20 câu hỏi,
+  câu trả lời, contexts, failures, runtime và latency.
+- [Baseline report](reports/naive_baseline_report.json).
+- [Failure analysis](analysis/failure_analysis.md) và [latency breakdown](analysis/latency_breakdown.md).
+
+Nếu thiếu key hoặc evaluator lỗi, báo cáo ghi `evaluation_status=unavailable`
+và các metric JSON là `null`. Không thay chúng bằng điểm mô phỏng.
+Unit tests chạy với key trống để kiểm tra fallback, không gọi API tính phí;
+chạy `main.py` với key thật để thực hiện đánh giá tích hợp.
+Qdrant có fallback in-memory khi server không sẵn sàng và ghi rõ backend trong report.
+PDF scan được cảnh báo và bỏ qua; cần OCR để bổ sung nội dung vào index.
+`.env`, `.venv`, cache và model weights được bỏ qua khi commit.
+
+API tích hợp được đối chiếu với [Qdrant Python client](https://github.com/qdrant/qdrant-client)
+và [RAGAS evaluate](https://docs.ragas.io/en/stable/references/evaluate/).

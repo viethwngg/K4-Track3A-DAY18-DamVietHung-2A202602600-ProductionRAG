@@ -1,77 +1,36 @@
-"""
-Lab 18: Production RAG Pipeline — Main Entry Point
-===================================================
-Chạy toàn bộ pipeline: naive baseline → production → so sánh → report.
+"""Run both pipelines and print a comparable, honest RAGAS score table."""
 
-Usage:
-    python main.py
-"""
-
-import json
-import os
 import sys
-import time
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8")
+from naive_baseline import main as run_baseline
+from src.m4_eval import METRICS
+from src.pipeline import build_pipeline, evaluate_pipeline
 
 
 def main():
-    print("=" * 60)
-    print("LAB 18: PRODUCTION RAG PIPELINE")
-    print("=" * 60)
-    start = time.time()
-
-    os.makedirs("reports", exist_ok=True)
-
-    # Step 1: Basic Baseline
-    print("\n📌 STEP 1: Running Basic RAG Baseline...")
-    print("-" * 40)
-    from naive_baseline import main as run_baseline
-    run_baseline()
-
-    # Step 2: Production Pipeline
-    print("\n📌 STEP 2: Running Production Pipeline...")
-    print("-" * 40)
-    from src.pipeline import build_pipeline, evaluate_pipeline
+    baseline = run_baseline()
     search, reranker = build_pipeline()
-    prod_results = evaluate_pipeline(search, reranker)
+    production = evaluate_pipeline(search, reranker)
+    print(f"{'Metric':<24} {'Baseline':>10} {'Production':>12} {'Delta':>10}")
+    for metric in METRICS:
+        if (
+            baseline["evaluation_status"]
+            == production["evaluation_status"]
+            == "completed"
+        ):
+            old, new = baseline[metric], production[metric]
+            print(f"{metric:<24} {old:>10.4f} {new:>12.4f} {new - old:>+10.4f}")
+        else:
+            print(f"{metric:<24} {'N/A':>10} {'N/A':>12} {'N/A':>10}")
+    print(
+        f"Evaluation: baseline={baseline['evaluation_status']}, production={production['evaluation_status']}"
+    )
+    from scripts.write_analysis import main as write_analysis
 
-    # Ensure reports are located in reports/
-    for f in ["ragas_report.json", "naive_baseline_report.json"]:
-        if os.path.exists(f):
-            os.replace(f, f"reports/{f}")
-
-    # Step 3: Comparison
-    print("\n📌 STEP 3: Comparison")
-    print("-" * 40)
-    naive_path = "reports/naive_baseline_report.json"
-    prod_path = "reports/ragas_report.json"
-
-    if os.path.exists(naive_path) and os.path.exists(prod_path):
-        with open(naive_path, encoding="utf-8") as f:
-            naive = json.load(f)
-        with open(prod_path, encoding="utf-8") as f:
-            prod = json.load(f)
-
-        print(f"\n{'Metric':<25} {'Basic':>8} {'Production':>12} {'Δ':>8}")
-        print("-" * 55)
-        for m in ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]:
-            n = naive.get("aggregate", {}).get(m, 0)
-            p = prod.get("aggregate", {}).get(m, 0)
-            d = p - n
-            status = "✓" if p >= 0.75 else " "
-            print(f"{status} {m:<23} {n:>8.4f} {p:>12.4f} {d:>+8.4f}")
-
-    elapsed = time.time() - start
-    print(f"\n⏱️  Total time: {elapsed:.1f}s")
-    print("\n📋 Next steps:")
-    print("  1. Điền analysis/failure_analysis.md")
-    print("  2. Viết analysis/reflections/reflection_[HọTên].md")
-    print("  3. Chạy: python check_lab.py")
+    write_analysis()
 
 
 if __name__ == "__main__":
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     main()

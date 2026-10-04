@@ -60,9 +60,11 @@ def run_tests() -> tuple[int, int]:
     """Run pytest and return (passed, total)."""
     try:
         import re
+        test_env = os.environ.copy()
+        test_env["OPENAI_API_KEY"] = ""  # Unit tests use deterministic API fallbacks.
         result = subprocess.run(
             [sys.executable, "-m", "pytest", "tests/", "-v", "--tb=no", "-q"],
-            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace"
+            capture_output=True, text=True, timeout=120, encoding="utf-8", errors="replace", env=test_env
         )
         lines = result.stdout.strip().split("\n")
         summary = lines[-1] if lines else ""
@@ -99,7 +101,8 @@ def validate():
 
     # 3. Analysis
     print("\n📝 Analysis:")
-    check_file("analysis/failure_analysis.md")
+    if not check_file("analysis/failure_analysis.md"):
+        errors += 1
 
     # 4. Individual reflections
     print("\n👤 Individual reflections:")
@@ -117,6 +120,7 @@ def validate():
             print(f"  ✅ {r}")
     else:
         print(f"  ⚠️  Chưa có file reflection cá nhân (đặt tại {ref_dir}/reflection_[HọTên].md hoặc analysis/reflection_[HọTên].md)")
+        errors += 1
 
     # 5. TODO count
     print("\n🔧 TODO markers:")
@@ -125,6 +129,7 @@ def validate():
         print("  ✅ Không còn TODO nào")
     else:
         print(f"  ⚠️  Còn {todo_count} TODO chưa implement")
+        errors += 1
 
     # 6. Tests
     print("\n🧪 Auto-tests:")
@@ -132,8 +137,21 @@ def validate():
     if total > 0:
         pct = passed / total * 100
         print(f"  {'✅' if pct >= 80 else '⚠️'} {passed}/{total} tests passed ({pct:.0f}%)")
+        if passed != total:
+            errors += 1
     else:
         print("  ⚠️  Không chạy được tests")
+        errors += 1
+
+    if os.path.exists("reports/ragas_report.json"):
+        try:
+            with open("reports/ragas_report.json", encoding="utf-8") as f:
+                report = json.load(f)
+            if report.get("evaluation_status") != "completed":
+                print("  ❌ RAGAS chưa hoàn tất; cần API key hợp lệ và chạy lại main.py")
+                errors += 1
+        except (ValueError, OSError):
+            pass  # Already counted by check_json.
 
     # 7. Summary
     print("\n" + "=" * 50)
@@ -142,7 +160,8 @@ def validate():
     else:
         print(f"❌ Có {errors} lỗi. Sửa trước khi nộp.")
     print("=" * 50)
+    return errors
 
 
 if __name__ == "__main__":
-    validate()
+    sys.exit(1 if validate() else 0)

@@ -59,6 +59,7 @@ def main():
         "documents_indexed": len(docs),
         "chunks": len(chunks),
         "strategy": "basic_dense_only",
+        "cpu_int8_linear": bool(getattr(search._get_encoder(), "_lab_cpu_int8", False)),
     }
     save_report(
         results,

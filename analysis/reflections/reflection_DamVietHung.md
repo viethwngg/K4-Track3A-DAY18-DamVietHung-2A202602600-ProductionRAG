@@ -32,6 +32,8 @@ Nguyên nhân là kiểm tra import trước khi pip cài xong toàn bộ môi t
 
 Model BGE có dung lượng lớn, tải lần đầu trở thành bottleneck setup. Script tải snapshot ghim theo commit, tải theo HTTP byte ranges và kiểm tra kích thước trước khi ghép file. Cache model không đưa lên Git; thời gian tải không được coi là latency truy vấn. Cache enrichment giúp tránh gọi lại API cho cùng nội dung, nguồn và model.
 
+Máy chạy lab có khoảng 8 GB RAM và PyTorch không có CUDA. Vì vậy cấu hình CPU dùng dynamic INT8 cho các lớp Linear của BGE, giữ embeddings và normalization ở floating point. Baseline và production dùng chung cấu hình, được ghi trong runtime report. Không coi điểm của cấu hình này là benchmark cho BGE floating point; khi đủ RAM có thể đặt `RAG_CPU_INT8=0` để đo riêng.
+
 ### PDF scan và giới hạn ingestion
 
 Thông báo thực tế:

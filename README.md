@@ -190,5 +190,12 @@ Qdrant có fallback in-memory khi server không sẵn sàng và ghi rõ backend 
 PDF scan được cảnh báo và bỏ qua; cần OCR để bổ sung nội dung vào index.
 `.env`, `.venv`, cache và model weights được bỏ qua khi commit.
 
+Trên CPU, BGE mặc định dùng dynamic INT8 cho các lớp Linear để giảm bộ nhớ
+trên máy 8 GB RAM. Model vẫn là `BAAI/bge-m3` và `BAAI/bge-reranker-v2-m3`;
+embedding/normalization giữ floating point. Báo cáo ghi rõ `cpu_int8_linear`.
+Đặt `RAG_CPU_INT8=0` trong `.env` để chạy floating point đầy đủ khi đủ RAM.
+Kết quả so sánh baseline/production phải dùng cùng cấu hình này.
+API tham khảo: [PyTorch quantize_dynamic](https://docs.pytorch.org/docs/stable/generated/torch.ao.quantization.quantize_dynamic.html).
+
 API tích hợp được đối chiếu với [Qdrant Python client](https://github.com/qdrant/qdrant-client)
 và [RAGAS evaluate](https://docs.ragas.io/en/stable/references/evaluate/).

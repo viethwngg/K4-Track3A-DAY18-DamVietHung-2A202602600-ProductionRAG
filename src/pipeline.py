@@ -107,6 +107,10 @@ def build_pipeline():
                 manifest.read_text(encoding="utf-8")
             )["revision"]
     search.runtime["enrichment_cache"] = "content_addressed_local_cache"
+    search.runtime["cpu_int8_linear"] = {
+        "embedding": bool(getattr(search.dense._get_encoder(), "_lab_cpu_int8", False)),
+        "reranker": bool(getattr(reranker._model.model, "_lab_cpu_int8", False)),
+    }
     return search, reranker
 
 

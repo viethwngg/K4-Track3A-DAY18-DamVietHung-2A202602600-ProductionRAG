@@ -73,7 +73,12 @@ class BM25Search:
 def _encoder(model_name: str):
     from sentence_transformers import SentenceTransformer
 
-    return SentenceTransformer(model_path(model_name))
+    from src.model_utils import optimize_cpu_model
+
+    encoder = SentenceTransformer(model_path(model_name))
+    if model_name.startswith("BAAI/bge"):
+        optimize_cpu_model(encoder)
+    return encoder
 
 
 class DenseSearch:

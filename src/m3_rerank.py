@@ -24,7 +24,12 @@ class RerankResult:
 def _cross_encoder(model_name: str):
     from sentence_transformers import CrossEncoder
 
-    return CrossEncoder(model_path(model_name), max_length=512)
+    from src.model_utils import optimize_cpu_model
+
+    encoder = CrossEncoder(model_path(model_name), max_length=512)
+    if model_name.startswith("BAAI/bge"):
+        optimize_cpu_model(encoder.model)
+    return encoder
 
 
 class CrossEncoderReranker:
